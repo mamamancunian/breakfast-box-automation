@@ -3,6 +3,12 @@ import requests
 from datetime import datetime, timedelta
 import json
 import time
+from zoneinfo import ZoneInfo
+
+BERLIN_TZ = ZoneInfo("Europe/Berlin")
+
+def now_berlin():
+    return datetime.now(BERLIN_TZ)
 
 # Environment variables
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '8820415070:AAEbCXPeHbnxPdeENZCn7S8NaxCR4V3qCmM')
@@ -87,8 +93,8 @@ class BreakfastReminder:
     
     def send_weekly_plan_reminder(self):
         """Saturday: send weekly recipe picks + shopping list"""
-        today = datetime.now().strftime('%Y-%m-%d')
-        today_obj = datetime.now()
+        today = now_berlin().strftime('%Y-%m-%d')
+        today_obj = now_berlin()
         
         if today_obj.weekday() != 5:  # Not Saturday
             return False
@@ -131,8 +137,8 @@ class BreakfastReminder:
     
     def send_morning_reminder(self):
         """7am Mon-Fri: same-morning prep reminder"""
-        today = datetime.now().strftime('%Y-%m-%d')
-        today_obj = datetime.now()
+        today = now_berlin().strftime('%Y-%m-%d')
+        today_obj = now_berlin()
         
         # Only Mon-Fri
         if today_obj.weekday() >= 5:
@@ -150,8 +156,8 @@ class BreakfastReminder:
     
     def send_evening_reminder(self):
         """8pm Sun-Thu: overnight prep / defrost reminder"""
-        today = datetime.now().strftime('%Y-%m-%d')
-        today_obj = datetime.now()
+        today = now_berlin().strftime('%Y-%m-%d')
+        today_obj = now_berlin()
         tomorrow_obj = today_obj + timedelta(days=1)
         tomorrow = tomorrow_obj.strftime('%Y-%m-%d')
         
@@ -173,7 +179,7 @@ class BreakfastReminder:
     
     def send_weekend_reminder(self):
         """10am Sat & Sun: weekend batch-cook reminder"""
-        today_obj = datetime.now()
+        today_obj = now_berlin()
         
         # Only Sat & Sun
         if today_obj.weekday() < 5:
@@ -191,7 +197,7 @@ class BreakfastReminder:
     
     def run_once(self):
         """Check time and send appropriate reminder — called every loop tick"""
-        now = datetime.now()
+        now = now_berlin()
         hour = now.hour
         minute = now.minute
         key = now.strftime('%Y-%m-%d-%H')  # one send per hour-slot max
