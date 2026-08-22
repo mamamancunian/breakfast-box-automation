@@ -189,28 +189,44 @@ class BreakfastReminder:
         
         return self.send_telegram_message(message)
     
-    def run(self):
-        """Check time and send appropriate reminder"""
+    def run_once(self):
+        """Check time and send appropriate reminder — called every loop tick"""
         now = datetime.now()
         hour = now.hour
         minute = now.minute
-        
+        key = now.strftime('%Y-%m-%d-%H')  # one send per hour-slot max
+
+        if key == self.last_sent_key:
+            return  # already sent this hour's reminder
+
+        sent = False
+
         # 7am morning reminder
-        if hour == 7 and minute < 5:
-            self.send_morning_reminder()
-        
+        if hour == 7 and minute < 2:
+            sent = self.send_morning_reminder()
+
         # 8pm evening reminder
-        elif hour == 20 and minute < 5:
-            self.send_evening_reminder()
-        
+        elif hour == 20 and minute < 2:
+            sent = self.send_evening_reminder()
+
         # 9am Saturday weekly plan
-        elif hour == 9 and minute < 5 and now.weekday() == 5:
-            self.send_weekly_plan_reminder()
-        
+        elif hour == 9 and minute < 2 and now.weekday() == 5:
+            sent = self.send_weekly_plan_reminder()
+
         # 10am Sat & Sun weekend batch reminder
-        elif hour == 10 and minute < 5 and now.weekday() >= 5:
-            self.send_weekend_reminder()
+        elif hour == 10 and minute < 2 and now.weekday() >= 5:
+            sent = self.send_weekend_reminder()
+
+        if sent:
+            self.last_sent_key = key
 
 if __name__ == "__main__":
+    print("Breakfast Box Automation starting — continuous loop, checking every 30s", flush=True)
     reminder = BreakfastReminder()
-    reminder.run()
+    reminder.last_sent_key = None
+    while True:
+        try:
+            reminder.run_once()
+        except Exception as e:
+            print(f"Error in run_once: {e}", flush=True)
+        time.sleep(30)
